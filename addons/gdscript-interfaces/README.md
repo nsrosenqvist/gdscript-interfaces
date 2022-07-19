@@ -36,7 +36,7 @@ An interface is just a GDScript, defined with a `class_name`, that details the p
 ```GDScript
 class_name CanTakeDamage extends Object
 
-var required = true
+var required
 
 signal foobar
 
