@@ -8,7 +8,7 @@ extends Node
 ##     at runtime when they are used or at application start (also runtime).
 ##     The code is MIT-licensed.
 ## 
-## @tutorial: https://github.com/nsrosenqvist/gdscript-extensions/tree/main/addons/gdscript-interfaces#readme
+## @tutorial: https://github.com/nsrosenqvist/gdscript-interfaces/tree/main/addons/gdscript-interfaces#readme
 ##
 
 export(bool) var runtime_validation = false
