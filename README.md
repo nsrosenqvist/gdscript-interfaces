@@ -65,3 +65,7 @@ If strict validation is off, the `implements` method will only check if an entit
 ## License
 
 MIT
+
+### Icon
+
+The icon resource is "Blueprint" by [mynamepong from NounProject.com](https://thenounproject.com/icon/blueprint-1966094/) (CC-BY). Colors and background have been changed.
