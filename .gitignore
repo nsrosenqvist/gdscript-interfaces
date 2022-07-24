@@ -10,3 +10,5 @@ export_presets.cfg
 # Imported translations (automatically generated from CSV files)
 *.translation
 
+# Ignore project in addon repo
+project.godot
