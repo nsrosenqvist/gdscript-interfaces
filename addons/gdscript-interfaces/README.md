@@ -1,5 +1,7 @@
 #  GDScript Interfaces
 
+![Screenshot showing the failed assertion](https://raw.githubusercontent.com/nsrosenqvist/gdscript-interfaces/main/showcase/screenshot.png)
+
 This is a utility library, which provides a very naive GDScript implementation of interfaces for Godot. It can by its nature only check for implementations at runtime and cannot validate method parameter definitions due to the language's lack of introspection. All implementations are validated when the application is loaded by default, so it behaves quite similarly to how one would expect interfaces to work in other languages. So it may serve as a helpful tool until [a native solution](https://github.com/godotengine/godot-proposals/issues/4872) is developed for GDScript.
 
 ## Contributions
