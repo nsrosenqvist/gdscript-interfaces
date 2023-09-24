@@ -12,7 +12,7 @@ extends Node
 ##
 
 @export var runtime_validation: bool = false
-@export var allow_string_classes: bool = true
+@export var allow_string_classes: bool = false
 @export var strict_validation: bool = true
 @export var validate_dirs: Array[String] = ["res://"]
 
