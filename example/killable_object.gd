@@ -1,7 +1,7 @@
 class_name KillableObject extends Node
 
-#const implements = [preload("res://example/can_take_damage.gd")]
-const implements = ["CanTakeDamage"]
+const implements = [preload("res://example/can_take_damage.gd")]
+#const implements = ["CanTakeDamage"]
 
 
 var tester
