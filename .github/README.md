@@ -1,1 +1,0 @@
-../addons/gdscript-interfaces/README.md
