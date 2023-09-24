@@ -99,7 +99,7 @@ func _build_class_name_cache() -> void:
 	
 	for s in scripts:
 		var script = load(s)
-		var identifier := _get_identifier(script, true)
+		var identifier := _get_interface_identifier(script)
 		if identifier != "":
 			_named_classes[identifier] = _get_script(script)
 	print(_named_classes)
@@ -182,7 +182,12 @@ func _get_implements(implementation) -> Array:
 	if consts.has("implements"):
 		var interfaces: Array[GDScript] = []
 		for interface in consts["implements"]:
-			interfaces.append(_named_classes[interface] if (interface is String) else interface)
+			if interface is String:
+				if not allow_string_classes:
+					assert(false, "Cannot use string type in implements as 'allow_string_classes' is false. ('%s' in %s)" % [interface, lookup])
+				interfaces.append(_named_classes[interface])
+			elif interface is GDScript:
+				interfaces.append(interface)
 		_implements[lookup] = interfaces
 	else:
 		_implements[lookup] = []
@@ -216,7 +221,7 @@ func _get_interface_identifier(implementation) -> String:
 	
 	if script.has_source_code():
 		var regex: RegEx = RegEx.new()
-		regex.compile("^\\s*#\\s*[iI]nterface$")
+		regex.compile("#\\s*[iI]nterface\\n")
 		var result = regex.search(script.source_code)
 		if result:
 			return _get_identifier(implementation, true)
