@@ -1,1 +1,1 @@
-../addons/gdscript-interfaces/README.md
+README.md
