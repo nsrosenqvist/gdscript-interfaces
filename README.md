@@ -11,11 +11,11 @@ Improvements and suggestions are very welcome. If you have the time and know-how
 ## Usage
 
 
-Add the `addons/Interfaces.gd` script to your project's autoloaded singletons.
+Add the plugin to your `addons` folder or install it via the asset library (COMING SOON). Then enable it in via Project > Project Settings > Plugins.
 Any script which "implements" an interface should have a property constant set called `implements`, which is an Array listing all its implementations.
 
 Previously this could be done as GDScript references (simply writing the ``class_name``).
-Unfortunately Godot 4.0+ no longer allows GDScript globals (the ``class_name``) to be used as const directly.
+Unfortunately Godot 4.0+ no longer allows GDScript globals (the ``class_name``) to be used as consts directly.
 This means you need to use prelaod instead, as this precompiles the script to make it a const.
 
 Using preload your ``implements`` statements will look like this.
@@ -25,7 +25,7 @@ const implements = [
 	preload("path/to/interface/can_heal.gd")
 ]
 ```
-As a workaround there is now a second way of defining implements easily, by enabling the new experimental feature ``allow_string_classes`` in the autoload script.
+As a workaround there is now a second way of defining implements easily, by enabling the experimental feature ``allow_string_classes`` in the autoload script `addons/gdscript-interfaces/interfaces.gd`.
 This enables using strings in the implements array like this:
 ```GDScript
 const implements = [
@@ -33,9 +33,9 @@ const implements = [
 	"CanHeal"
 ]
 ```
-However the downside is that the autoload keeps a list of all scripts that define a ``class_name``.
-This list is created by looping over all scripts in the project and keeping them in a dictionary.
-Therefore this option should not be used in bigger projects with lots of scripts, as it would slow down startup and eat up lots of memory.
+This feature should be used with caution, as it runs the interface names as gdscript code arbitrarily. This should not (as interface names can't be changed at runtime), but could enable some form of arbitrary code execution exploit.
+_The code in question can be found in line 175-181 of `interfaces.gd` if you are interested_.
+<br>You have been warned.
 
 Then, wherever you wish to check for an implementation, you call the function `implements` on the singleton (the function can either take a single GDScript reference or an array of GDScripts).
 Here you can use the ``class_name`` again!
