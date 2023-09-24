@@ -18,7 +18,7 @@ Previously this could be done as GDScript references (simply writing the ``class
 Unfortunately Godot 4.0+ no longer allows GDScript globals (the ``class_name``) to be used as const directly.
 This means you need to use prelaod instead, as this precompiles the script to make it a const.
 
-One using preload instead of names:
+Using preload your ``implements`` statements will look like this.
 ```GDScript
 const implements = [
 	preload("path/to/interface/can_take_damage.gd"),
