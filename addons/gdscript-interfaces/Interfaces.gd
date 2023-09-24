@@ -11,17 +11,24 @@ extends Node
 ## @tutorial: https://github.com/nsrosenqvist/gdscript-interfaces/tree/main/addons/gdscript-interfaces#readme
 ##
 
-export(bool) var runtime_validation = false
-export(bool) var strict_validation = true
-export(Array, String) var validate_dirs = ["res://"]
+@export var runtime_validation: bool = false
+# TODO: This can be removed as soon as global script names are allow as constants again.
+## If this is true, a list of all interfaces is saved in memory to enable using "const implements = ['InterfaceName']" instead of preloads only.
+## For big projects with lots of "class_name" scripts this should be off to safe memory (preloads have to be used in that case).
+## WARNING: only works if none of the interfaces are outside of the "validate_dirs" directories. Use at your own risk.
+@export var allow_string_classes: bool = false
+@export var strict_validation: bool = true
+@export var validate_dirs: Array[String] = ["res://"]
 
-var _interfaces = {}
-var _identifiers = {}
-var _implements = {}
+var _interfaces := {}
+var _identifiers := {}
+var _implements := {}
+
+var _named_classes := {}
 
 ## Validate that an entity implements an interface
 ##
-## enitity [Object]: Any GDscript or a node with script attached
+## implementation [Object]: Any GDscript or a node with script attached
 ## interfaces [GDScript|Array]: The interface(s) to validate against
 ## validate [bool]: Whether validation should run or if only the
 ##                  implements constant should be checked
@@ -77,9 +84,25 @@ func implementations(objects : Array, interfaces, validate = false) -> Array:
 	return result
 
 func _ready():
+	# Load all "class_name" scripts
+	if allow_string_classes:
+		_build_class_name_cache()
 	# Pre-validate all interfaces on game start
 	if not runtime_validation:
 		_validate_all_implementations()
+
+func _build_class_name_cache() -> void:
+	var files = []
+	for d in validate_dirs:
+		files.append_array(_files(d, true))
+	var scripts = _filter(files, _only_scripts)
+	
+	for s in scripts:
+		var script = load(s)
+		var identifier := _get_identifier(script, true)
+		if identifier != "":
+			_named_classes[identifier] = _get_script(script)
+	print(_named_classes)
 
 func _validate_all_implementations() -> void:
 	# Get all script files
@@ -88,7 +111,7 @@ func _validate_all_implementations() -> void:
 	for d in validate_dirs:
 		files.append_array(_files(d, true))
 
-	var scripts = _filter(files, funcref(self, "_only_scripts"))
+	var scripts = _filter(files, _only_scripts)
 
 	# Validate all scripts that has the constant "implements"
 	for s in scripts:
@@ -104,9 +127,8 @@ func _only_scripts(file : String) -> bool:
 
 func _files(path : String, recursive = false) -> Array:
 	var result = []
-	var dir = Directory.new()
-	
-	if dir.open(path) == OK:
+	var dir = DirAccess.open(path)
+	if dir:
 		dir.list_dir_begin()
 		var file_name = dir.get_next()
 		
@@ -114,9 +136,9 @@ func _files(path : String, recursive = false) -> Array:
 			if not (file_name == "." or file_name == ".."):
 				if dir.current_is_dir():
 					if recursive:
-						result.append_array(_files(path.plus_file(file_name)))
+						result.append_array(_files(path.path_join(file_name)))
 				else:
-					result.append(path.plus_file(file_name))
+					result.append(path.path_join(file_name))
 			
 			file_name = dir.get_next()
 	else:
@@ -124,11 +146,11 @@ func _files(path : String, recursive = false) -> Array:
 	
 	return result
 
-func _filter(objects : Array, function : FuncRef) -> Array:
+func _filter(objects : Array, function : Callable) -> Array:
 	var result = []
 	
 	for object in objects:
-		if function.call_func(object):
+		if function.call(object):
 			result.append(object)
 	
 	return result
@@ -153,15 +175,21 @@ func _get_implements(implementation) -> Array:
 	
 	if _implements.has(lookup):
 		return _implements[lookup]
-		
+	
 	# Get implements constant from script
 	var consts : Dictionary = script.get_script_constant_map()
 	
-	_implements[lookup] = consts["implements"] if consts.has("implements") else []
+	if consts.has("implements"):
+		var interfaces: Array[GDScript] = []
+		for interface in consts["implements"]:
+			interfaces.append(_named_classes[interface] if (interface is String) else interface)
+		_implements[lookup] = interfaces
+	else:
+		_implements[lookup] = []
 	
 	return _implements[lookup]
 
-func _get_identifier(implementation) -> String:
+func _get_identifier(implementation, strict = false) -> String:
 	var script : GDScript = _get_script(implementation)
 	var lookup : String = str(script)
 	
@@ -177,12 +205,24 @@ func _get_identifier(implementation) -> String:
 		if result:
 			_identifiers[lookup] = result.get_string().substr(11)
 		else:
-			_identifiers[lookup] = script.resource_path
+			_identifiers[lookup] = "" if strict else script.resource_path
 		
 		return _identifiers[lookup]
 	
 	return "Unknown"
+
+func _get_interface_identifier(implementation) -> String:
+	var script : GDScript = _get_script(implementation)
 	
+	if script.has_source_code():
+		var regex: RegEx = RegEx.new()
+		regex.compile("^\\s*#\\s*[iI]nterface$")
+		var result = regex.search(script.source_code)
+		if result:
+			return _get_identifier(implementation, true)
+	
+	return ""
+
 func _validate_implementation(script : GDScript, interface : GDScript, assert_on_fail = false) -> bool:
 	var implementation_id = _get_identifier(script)
 	var interface_id = _get_identifier(interface)
@@ -219,6 +259,8 @@ func _validate_implementation(script : GDScript, interface : GDScript, assert_on
 	var props = _column(script.get_script_property_list(), "name")
 	
 	for p in _column(interface.get_script_property_list(), "name"):
+		if (p.ends_with(".gd")):
+			continue
 		if not (p in props):
 			if assert_on_fail:
 				assert(false, implementation_id + ' does not implement the property "'+p+'" on the interface ' + interface_id)
