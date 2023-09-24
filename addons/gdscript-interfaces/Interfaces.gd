@@ -15,7 +15,7 @@ extends Node
 # TODO: This can be removed as soon as global script names are allow as constants again.
 ## If this is true, a list of all interfaces is saved in memory to enable using "const implements = ['InterfaceName']" instead of preloads only.
 ## For big projects with lots of "class_name" scripts this should be off to safe memory (preloads have to be used in that case).
-## WARNING: only works if none of the interfaces are outside of the "validate_dirs" directories. Use at your own risk.
+## WARNING: only works if all of the interfaces are inside of the "validate_dirs" directories.
 @export var allow_string_classes: bool = false
 @export var strict_validation: bool = true
 @export var validate_dirs: Array[String] = ["res://"]
