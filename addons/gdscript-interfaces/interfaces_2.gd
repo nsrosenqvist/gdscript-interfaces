@@ -12,19 +12,13 @@ extends Node
 ##
 
 @export var runtime_validation: bool = false
-# TODO: This can be removed as soon as global script names are allow as constants again.
-## If this is true, a list of all interfaces is saved in memory to enable using "const implements = ['InterfaceName']" instead of preloads only.
-## For big projects with lots of "class_name" scripts this should be off to safe memory (preloads have to be used in that case).
-## WARNING: only works if all of the interfaces are inside of the "validate_dirs" directories.
-@export var allow_string_classes: bool = false
+@export var allow_string_classes: bool = true
 @export var strict_validation: bool = true
 @export var validate_dirs: Array[String] = ["res://"]
 
 var _interfaces := {}
 var _identifiers := {}
 var _implements := {}
-
-var _named_classes := {}
 
 ## Validate that an entity implements an interface
 ##
@@ -84,25 +78,9 @@ func implementations(objects : Array, interfaces, validate = false) -> Array:
 	return result
 
 func _ready():
-	# Load all "class_name" scripts
-	if allow_string_classes:
-		_build_class_name_cache()
 	# Pre-validate all interfaces on game start
 	if not runtime_validation:
 		_validate_all_implementations()
-
-func _build_class_name_cache() -> void:
-	var files = []
-	for d in validate_dirs:
-		files.append_array(_files(d, true))
-	var scripts = _filter(files, _only_scripts)
-	
-	for s in scripts:
-		var script = load(s)
-		var identifier := _get_interface_identifier(script)
-		if identifier != "":
-			_named_classes[identifier] = _get_script(script)
-	print(_named_classes)
 
 func _validate_all_implementations() -> void:
 	# Get all script files
@@ -185,7 +163,7 @@ func _get_implements(implementation) -> Array:
 			if interface is String:
 				if not allow_string_classes:
 					assert(false, "Cannot use string type in implements as 'allow_string_classes' is false. ('%s' in %s)" % [interface, lookup])
-				interfaces.append(_named_classes[interface])
+				interfaces.append(_get_interface_script(interface))
 			elif interface is GDScript:
 				interfaces.append(interface)
 		_implements[lookup] = interfaces
@@ -193,6 +171,14 @@ func _get_implements(implementation) -> Array:
 		_implements[lookup] = []
 	
 	return _implements[lookup]
+
+func _get_interface_script(interface_name):
+	var script = GDScript.new()
+	script.set_source_code("func eval(): return " + interface_name)
+	script.reload()
+	var ref = RefCounted.new()
+	ref.set_script(script)
+	return ref.eval()
 
 func _get_identifier(implementation, strict = false) -> String:
 	var script : GDScript = _get_script(implementation)
@@ -215,18 +201,6 @@ func _get_identifier(implementation, strict = false) -> String:
 		return _identifiers[lookup]
 	
 	return "Unknown"
-
-func _get_interface_identifier(implementation) -> String:
-	var script : GDScript = _get_script(implementation)
-	
-	if script.has_source_code():
-		var regex: RegEx = RegEx.new()
-		regex.compile("#\\s*[iI]nterface\\n")
-		var result = regex.search(script.source_code)
-		if result:
-			return _get_identifier(implementation, true)
-	
-	return ""
 
 func _validate_implementation(script : GDScript, interface : GDScript, assert_on_fail = false) -> bool:
 	var implementation_id = _get_identifier(script)

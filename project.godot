@@ -16,7 +16,7 @@ config/icon="res://icon.svg"
 
 [autoload]
 
-Interfaces="*res://addons/gdscript-interfaces/Interfaces.gd"
+Interfaces="*res://addons/gdscript-interfaces/interfaces_2.gd"
 
 [editor_plugins]
 

@@ -1,6 +1,4 @@
-# Interface
-class_name CanTakeDamage
-extends Object
+class_name CanTakeDamage extends Object
 
 var tester
 
